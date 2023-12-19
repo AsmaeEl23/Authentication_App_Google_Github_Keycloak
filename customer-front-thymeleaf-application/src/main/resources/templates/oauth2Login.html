@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="template"
+>
+<!-- decorate my page with my template (template.html) the first thing will display is the template-->
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" type="text/css" href="/webjars/bootstrap/5.1.1/css/bootstrap.min.css">
+
+</head>
+<body>
+<!--go and find the contente fragment in my template and display it here-->
+    <div layout:fragment="contente">
+        <div class="p-3">
+            <div class="card">
+                <div class="card-body">
+                    <ul class="list-group">
+                        <li class="list-group-item" th:each="url:${urls}">
+                            <div class="d-grid">
+                                <!--  *********************  urls in our model (model.addAttribute("urls", oauth2AuthenticationUrls);)-->
+                                <a class="btn btn-outline-info" th:text="${url.key}" th:href="${url.value}"></a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
