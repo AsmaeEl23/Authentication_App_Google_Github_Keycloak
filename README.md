@@ -179,5 +179,135 @@ function initializeKeycloak(keycloak: KeycloakService) {
 <h6>Create the login and logout methods</h6>
 
 
-<h3>With Docker</h3>
+<h2>With Docker</h2>
+<h5>SQL database place of h2</h5>
+<p>Add sql dependency in inventory service</p>
+<pre>
+        <.dependency>
+			<.groupId>com.mysql<./groupId>
+			<.artifactId>mysql-connector-j<./artifactId>
+		<./dependency>
+</pre>
+<h3>MYSQL container in Docker</h3>
+<ul>
+<li type="1">Create docker-compose.yml file</li>
+<pre>
+#Demarer plusieur services
+services:
+  #service 1 = mysql-db-inventory
+  mysql-db-inventory:
+    #L'image de docker pour mysql
+    image: mariadb:10.6
+    #Conteneur avec la meme nom comme le service
+    container_name: mysql-db-inventory
+    #Il est important de redemarer toujour
+    restart: always
+    #Si on supprime le conteneur les donnees rest a laide de volumes pour stocker toutes les donnees sur mysql_data:/var/lib/mysql mais il faut declarer le volume docker mysql_data
+    volumes:
+      - mysql_data:/var/lib/mysql
+    #Dommande a cree une base de donnees inventory-db
+    environment:
+      MYSQL_DATABASE: inventory-db
+      MYSQL_USER: asmae
+      MYSQL_PASSWORD: asmae123
+      MYSQL_ROOT_PASSWORD: admin
+    ports:
+      #port exterieur de conteneur : port interieur de conteneur
+      - 3306:3306
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 5s
+      retries: 10
+  phpmyadmin:
+    image: phpmyadmin
+    restart: always
+    ports:
+      - 9999:80
+    environment:
+      #use our my sql service name
+      PMA_HOST: mysql-db-inventory
+      PMA_PORT: 3306
+      #acceder a la base de donnees par defaut
+      PMA_ARBITRARY: 1
+
+#************************************
+volumes:
+mysql_data:
+</pre>
+<li type="1">Docker commands</li>
+<li type="1">Start the docker compose with this command : docker compose up </li>
+<img src="images/img_28.png">
+<img src="images/img_29.png">
+<p>" docker images " command, to see all the images</p>
+<p>" docker ps " command, to see the starting containers</p>
+<p>" docker stop [the first 4 numbers of the container ID/or name] " command, to stop a container</p>
+<p>" docker start [the first 4 numbers of the container ID/or name] " command, to start a container</p>
+<p>" docker logs [the first 4 numbers of the container ID/or name] " </p>
+<img src="images/img_30.png">
+<p>"docker compose down" to shut down all the services and removing all the containers</p>
+<p>"docker compose up -d" to start all the services</p>
+<img src="images/img_31.png">
+<li type="1">Run inventory service</li>
+<img src="images/img_32.png">
+<p>the use of mysql in place of h2 </p>
+</ul>
+<h3>Generate app.jar</h3>
+<ul>
+<li>put the spring application in docker, so we need to generate it by mvn</li>
+<p>"mvn compile" --> compile source code</p>
+<p>"mvn test" --> run unit tests</p>
+<p>"mvn package" --> do the 3 (compile and test) then generate packages</p>
+<p>"mvn clean" --> to delete all the content of the target folder</p>
+<p>"mvn clean package -DskipTests" --> to delete and regenerate the package without the unit tests</p>
+<p>Our application generated in Target</p>
+<img src="images/img_33.png">
+<li>Run the app (in the path /target run the command)</li>
+<p>without docker -->  "java -jar [name of the app]"</p>
+<img src="images/img_34.png">
+</ul>
+<h3>Run the app with Docker</h3>
+<ul>
+<li type="1"><h5>Create a docker file for each service</h5></li>
+<pre>
+#image openjdk
+FROM openjdk:17
+VOLUME /tmp
+#copy the jar file from target to docker with the name app.jar, so in the docker we will find the image ad the app
+COPY target/*.jar  app.jar
+#To execute the app (jave -jar app.jar) manually
+ENTRYPOINT ["java","-jar", "app.jar"]
+</pre>
+<li type="1"><h5>Create the image "docker build . -t [nameOfImage/inventory-service-sdia]:[version/v1]"</h5></li>
+<img src="images/img_35.png">
+<li type="1"><h5>Start containers from this image " docker run inventory-service-sdia:v1 -e DB_URL=jdbc:mysql://mysql-db-inventory:3306/inventory-db" </h5></li>
+<p>But there is a problem of network, the containers inventory and mysql don't exist in the same network,
+so they can not communicate, that's why we are going to use the docker compose</p>
+<li type="1"><h5>Create new service for the inventory app in docker-compose.yml </h5></li>
+<p>To make the 3 services in the same network, so they can communicate between them </p>
+<p>Run again those commands "docker compose down", "docker compose up -d --build" --build to force the creation of the image, for each request of the recreation</p>
+<li type="1"><h5>Summary (Run the app with docker)</h5></li>
+<ul>
+<li>"mvn clean package -DskipTests" --> Generate the jar file </li>
+<li>"docker compose down"</li>
+<li>"docker compose up -d --build"</li>
+<img src="images/img_36.png">
+</ul>
+</ul>
+<h3>Customer front thymeleaf application</h3>
+<p>Same thing we did with inventory service</p>
+<p>1- Modify keycloak URI in app.properties</p>
+<p>2- Generate keycloak, postgres and pgadmin4 services in docker-compose</p>
+<img src="images/img_37.png">
+<p>In host name we write the name of our service (container name) we declared in the compose file, also the other information</p>
+<p>Add the thymeleaf service and also their environment on app.prop</p>
+<p>Realm setting in keycloak make the Require ssl none</p>
+
+<h3>Angular</h3>
+<ul>
+<li><h5>"ng build" -->Generate the jar file </h5></li>
+<li><h5>Create Dockerfile</h5></li>
+<li><h5>Add the angular service in docker_compose file</h5></li>
+<li><h5>Change the onLoad : 'login-required' in app-module, that means it obligatory to authenticate before you inter the app</h5></li>
+</ul>
+
 

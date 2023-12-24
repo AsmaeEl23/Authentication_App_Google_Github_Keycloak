@@ -3,6 +3,7 @@ package ma.sdia.customerfrontthymeleafapplication.web;
 import ma.sdia.customerfrontthymeleafapplication.entities.Customer;
 import ma.sdia.customerfrontthymeleafapplication.model.Product;
 import ma.sdia.customerfrontthymeleafapplication.repository.CustomerRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,6 +28,8 @@ import java.util.Map;
 public class CustomerController {
     private CustomerRepository customerRepository;
     private ClientRegistrationRepository clientRegistrationRepository;
+    @Value("${inventory.service.base.uri}")
+    private String inventoryServiceBaseUri;
 
     public CustomerController(CustomerRepository customerRepository, ClientRegistrationRepository clientRegistrationRepository) {
         this.customerRepository = customerRepository;
@@ -42,25 +45,31 @@ public class CustomerController {
     }
     @GetMapping("/products")
     public String products(Model model){
-        // Model class is used to pass data between the controller and the view in a Spring MVC application.
-        SecurityContext context = SecurityContextHolder.getContext();
-        Authentication authentication = context.getAuthentication();
-        OAuth2AuthenticationToken oAuth2AuthenticationToken= (OAuth2AuthenticationToken) authentication;
-        DefaultOidcUser oidcUser = (DefaultOidcUser) oAuth2AuthenticationToken.getPrincipal();
-        String jwtTokenValue=oidcUser.getIdToken().getTokenValue();
-        System.out.println("---------------------***************----------------------");
-        System.out.println("jwtTokenValue "+jwtTokenValue);
-        RestClient restClient = RestClient.create("http://localhost:8082");
-        List<Product> products = restClient.get()
-                .uri("/products")
-                .headers(httpHeaders -> httpHeaders.set(HttpHeaders.AUTHORIZATION, "Bearer "+jwtTokenValue))
-                .retrieve()
-                .body(new ParameterizedTypeReference<>(){});
-        model.addAttribute("products",products);
-        System.out.println("---------------------***************----------------------");
-        System.out.println(products);
-        System.out.println("---------------------***************----------------------");
-        return "products";
+        try {
+            // Model class is used to pass data between the controller and the view in a Spring MVC application.
+            SecurityContext context = SecurityContextHolder.getContext();
+            Authentication authentication = context.getAuthentication();
+            OAuth2AuthenticationToken oAuth2AuthenticationToken = (OAuth2AuthenticationToken) authentication;
+            DefaultOidcUser oidcUser = (DefaultOidcUser) oAuth2AuthenticationToken.getPrincipal();
+            String jwtTokenValue = oidcUser.getIdToken().getTokenValue();
+            System.out.println("---------------------***************----------------------");
+            System.out.println("jwtTokenValue " + jwtTokenValue);
+            //RestClient restClient = RestClient.create("http://localhost:8082");
+            RestClient restClient = RestClient.create(inventoryServiceBaseUri);
+            List<Product> products = restClient.get()
+                    .uri("/products")
+                    .headers(httpHeaders -> httpHeaders.set(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTokenValue))
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<>() {
+                    });
+            model.addAttribute("products", products);
+            System.out.println("---------------------***************----------------------");
+            System.out.println(products);
+            System.out.println("---------------------***************----------------------");
+            return "products";
+        }catch (Exception e){
+            return "redirect:/notAuthorized";
+        }
     }
 
     //User information ( session)

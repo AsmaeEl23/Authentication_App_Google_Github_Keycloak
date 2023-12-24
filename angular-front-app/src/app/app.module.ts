@@ -17,7 +17,7 @@ function initializeKeycloak(keycloak: KeycloakService) {
         clientId: 'sdia-customers-angular'
       },
       initOptions : {
-        onLoad : "check-sso",
+        onLoad : "login-required",
         silentCheckSsoRedirectUri:
           window.location.origin + '/assets/silent-check-sso.html'
       }
